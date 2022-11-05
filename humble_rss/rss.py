@@ -42,6 +42,11 @@ def rss():
     raw_json = soup.find("script", {"id": "landingPage-json-data"}).contents[0]
     data = json.loads(raw_json)
     books = data["data"]["books"]["mosaic"][0]["products"]
+    sorted_books = sorted(
+        books,
+        key=lambda b: datetime.fromisoformat(b["start_date|datetime"]),
+        reverse=False,
+    )
 
     fg = FeedGenerator()
     fg.link(href="https://humblerss.herokuapp.com")
@@ -49,7 +54,7 @@ def rss():
     fg.author({"name": "shimst3r", "email": "@shimst3r@chaos.social"})
     fg.subtitle("Humble RSS - Your humble RSS feed for HumbleBundle news.")
     fg.language("en")
-    for book in books:
+    for book in sorted_books:
         fe = fg.add_entry()
         fe.title(book["tile_short_name"])
         fe.link(href=f"https://humblebundle.com/{book['product_url']}")
