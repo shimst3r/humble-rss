@@ -28,7 +28,7 @@ app.config.from_mapping(config)
 cache = Cache(app)
 
 
-@app.get("/rss")
+@app.get("/")
 @cache.cached()
 def rss():
     resp = requests.get("https://humblebundle.com/books?hmb_source=navbar")
