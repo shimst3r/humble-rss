@@ -1,1 +1,1 @@
-web: waitress-serve --host "0.0.0.0:1312" humble_rss.rss:app
+web: waitress-serve --port=$PORT humble_rss.rss:app
