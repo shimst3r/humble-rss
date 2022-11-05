@@ -34,7 +34,7 @@ def rss():
     resp = requests.get("https://humblebundle.com/books")
     if resp.status_code != 200:
         return (
-            f"Error: unexpected status code while retreiving data: {resp.status_code}",
+            f"Error: unexpected status code: {resp.status_code}",
             503,
         )
 
