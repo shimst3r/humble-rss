@@ -15,7 +15,7 @@ import pytz
 import requests
 from bs4 import BeautifulSoup
 from feedgen.feed import FeedGenerator
-from flask import Flask
+from flask import Flask, make_response
 from flask_caching import Cache
 
 config = {
@@ -63,5 +63,7 @@ def rss():
         fe.pubDate(pytz.utc.localize(dt))
 
     feed = fg.rss_str(pretty=True)
+    response = make_response(feed)
+    response.headers.set("Content-Type", "application/rss+xml")
 
-    return feed
+    return response
