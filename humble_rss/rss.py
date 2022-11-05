@@ -31,9 +31,12 @@ cache = Cache(app)
 @app.get("/")
 @cache.cached()
 def rss():
-    resp = requests.get("https://humblebundle.com/books?hmb_source=navbar")
+    resp = requests.get("https://humblebundle.com/books")
     if resp.status_code != 200:
-        print(f"error: unexpected status code: {resp.status_code}")
+        return (
+            f"Error: unexpected status code while retreiving data: {resp.status_code}",
+            503,
+        )
 
     soup = BeautifulSoup(resp.content, "html5lib")
     raw_json = soup.find("script", {"id": "landingPage-json-data"}).contents[0]
@@ -41,9 +44,9 @@ def rss():
     books = data["data"]["books"]["mosaic"][0]["products"]
 
     fg = FeedGenerator()
-    fg.link(href="https://localhost/rss")
+    fg.link(href="https://humblerss.herokuapp.com")
     fg.title("Humble RSS")
-    fg.author({"name": "shimst3r", "email": "shimst3r+humble@gmail.com"})
+    fg.author({"name": "shimst3r", "email": "@shimst3r@chaos.social"})
     fg.subtitle("Humble RSS - Your humble RSS feed for HumbleBundle news.")
     fg.language("en")
     for book in books:
