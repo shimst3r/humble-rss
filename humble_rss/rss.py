@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from feedgen.feed import FeedGenerator
 from flask import make_response
 from flask.blueprints import Blueprint
+from werkzeug.exceptions import InternalServerError
 
 from .cache import cache
 
@@ -16,7 +17,10 @@ bp = Blueprint("rss", __name__)
 @bp.get("/")
 @cache.cached()
 def rss():
-    books = _get_books()
+    try:
+        books = _get_books()
+    except InternalServerError as err:
+        return err, 500
     feed = _generate_feed(books)
     response = _make_response(feed)
 
@@ -33,7 +37,7 @@ def _generate_feed(books):
     for book in books:
         fe = fg.add_entry()
         fe.title(book["tile_short_name"])
-        fe.link(href=f"https://humblebundle.com/{book['product_url']}")
+        fe.link(href="https://humblebundle.com" + book["product_url"])
         fe.content(book["detailed_marketing_blurb"])
         dt = datetime.fromisoformat(book["start_date|datetime"])
         fe.pubDate(pytz.utc.localize(dt))
@@ -44,10 +48,7 @@ def _generate_feed(books):
 def _get_books():
     resp = requests.get("https://humblebundle.com/books")
     if resp.status_code != 200:
-        return (
-            f"Error: unexpected status code: {resp.status_code}",
-            503,
-        )
+        raise InternalServerError(f"Error: unexpected status code: {resp.status_code}")
 
     soup = BeautifulSoup(resp.content, "html5lib")
     raw_json = soup.find("script", {"id": "landingPage-json-data"}).contents[0]
