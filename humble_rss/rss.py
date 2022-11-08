@@ -48,7 +48,8 @@ def _generate_feed(books):
 def _get_books():
     resp = requests.get("https://humblebundle.com/books")
     if resp.status_code != 200:
-        raise InternalServerError(f"Error: unexpected status code: {resp.status_code}")
+        err = f"Error: unexpected status code: {resp.status_code}"
+        raise InternalServerError(err)
 
     soup = BeautifulSoup(resp.content, "html5lib")
     raw_json = soup.find("script", {"id": "landingPage-json-data"}).contents[0]
