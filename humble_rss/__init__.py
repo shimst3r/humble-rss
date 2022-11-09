@@ -8,7 +8,7 @@ Humble RSS works like this:
 4. Generate a feed using the feedgen library.
 5. Serve the data using Flask.
 """
-from flask import Flask
+from flask import Flask, render_template
 
 from . import rss
 from .cache import cache
@@ -27,5 +27,10 @@ def create_app(cfg: dict):
     app.register_blueprint(rss.bp)
 
     cache.init_app(app)
+
+    @app.get("/")
+    @cache.cached()
+    def home():
+        return render_template("index.html")
 
     return app

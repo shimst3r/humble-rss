@@ -14,11 +14,11 @@ from .cache import cache
 bp = Blueprint("rss", __name__)
 
 
-@bp.get("/")
+@bp.get("/books")
 @cache.cached()
-def rss():
+def books():
     try:
-        books = _get_books()
+        books = _get_items_by_category("books")
     except InternalServerError as err:
         return err, 500
     feed = _generate_feed(books)
@@ -27,26 +27,39 @@ def rss():
     return response, 200
 
 
-def _generate_feed(books):
+@bp.get("/games")
+@cache.cached()
+def games():
+    try:
+        games = _get_items_by_category("games")
+    except InternalServerError as err:
+        return err, 500
+    feed = _generate_feed(games)
+    response = _make_response(feed)
+
+    return response, 200
+
+
+def _generate_feed(items):
     fg = FeedGenerator()
     fg.link(href="https://humblerss.herokuapp.com")
     fg.title("Humble RSS")
     fg.author({"name": "shimst3r", "email": "@shimst3r@chaos.social"})
     fg.subtitle("Humble RSS - Your humble RSS feed for HumbleBundle news.")
     fg.language("en")
-    for book in books:
+    for item in items:
         fe = fg.add_entry()
-        fe.title(book["tile_short_name"])
-        fe.link(href="https://humblebundle.com" + book["product_url"])
-        fe.content(book["detailed_marketing_blurb"])
-        dt = datetime.fromisoformat(book["start_date|datetime"])
+        fe.title(item["tile_short_name"])
+        fe.link(href="https://humblebundle.com" + item["product_url"])
+        fe.content(item["detailed_marketing_blurb"])
+        dt = datetime.fromisoformat(item["start_date|datetime"])
         fe.pubDate(pytz.utc.localize(dt))
 
     return fg
 
 
-def _get_books():
-    resp = requests.get("https://humblebundle.com/books")
+def _get_items_by_category(category):
+    resp = requests.get(f"https://humblebundle.com/{category}")
     if resp.status_code != 200:
         err = f"Error: unexpected status code: {resp.status_code}"
         raise InternalServerError(err)
@@ -54,14 +67,14 @@ def _get_books():
     soup = BeautifulSoup(resp.content, "html5lib")
     raw_json = soup.find("script", {"id": "landingPage-json-data"}).contents[0]
     data = json.loads(raw_json)
-    books = data["data"]["books"]["mosaic"][0]["products"]
-    sorted_books = sorted(
-        books,
-        key=lambda b: datetime.fromisoformat(b["start_date|datetime"]),
+    items = data["data"][category]["mosaic"][0]["products"]
+    sorted_items = sorted(
+        items,
+        key=lambda item: datetime.fromisoformat(item["start_date|datetime"]),
         reverse=False,
     )
 
-    return sorted_books
+    return sorted_items
 
 
 def _make_response(feed):
