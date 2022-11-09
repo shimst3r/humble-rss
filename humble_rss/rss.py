@@ -40,6 +40,19 @@ def games():
     return response, 200
 
 
+@bp.get("/software")
+@cache.cached()
+def software():
+    try:
+        software = _get_items_by_category("software")
+    except InternalServerError as err:
+        return err, 500
+    feed = _generate_feed(software)
+    response = _make_response(feed)
+
+    return response, 200
+
+
 def _generate_feed(items):
     fg = FeedGenerator()
     fg.link(href="https://humblerss.herokuapp.com")
